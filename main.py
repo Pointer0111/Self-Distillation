@@ -144,6 +144,7 @@ if __name__ == "__main__":
     report_to = [] if args.report_to.lower() == "none" else args.report_to
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     rank = int(os.environ.get("RANK", "0"))
+    sync_ref_model = not args.use_lora
 
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
@@ -189,7 +190,7 @@ if __name__ == "__main__":
         deepspeed=args.deepspeed,
         ddp_find_unused_parameters=args.ddp_find_unused_parameters,
         log_completions=False,  # True for debugging
-        sync_ref_model=True,
+        sync_ref_model=sync_ref_model,
         ref_model_sync_steps=1,
         ref_model_mixup_alpha=args.ref_model_mixup_alpha,
         vllm_importance_sampling_correction=True,
@@ -221,6 +222,7 @@ if __name__ == "__main__":
             print(f"lora_target_modules: {args.lora_target_modules}")
         print(f"deepspeed: {args.deepspeed}")
         print(f"use_vllm: {args.use_vllm}")
+        print(f"sync_ref_model: {sync_ref_model}")
         if args.use_vllm:
             print(f"vllm_mode: {args.vllm_mode}")
             print(f"vllm_tensor_parallel_size: {args.vllm_tensor_parallel_size}")

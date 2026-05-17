@@ -48,7 +48,6 @@ from transformers.utils import is_datasets_available, is_flash_attn_2_available,
 
 from trl.data_utils import apply_chat_template, is_conversational, maybe_apply_chat_template, prepare_multimodal_messages
 from trl.extras.profiling import profiling_context, profiling_decorator
-from trl.extras.vllm_client import VLLMClient
 from trl.import_utils import is_liger_kernel_available, is_vllm_available
 from trl.models import prepare_deepspeed, prepare_fsdp, prepare_peft_model, unwrap_model_for_generation
 from trl.models.utils import _ForwardRedirection
@@ -77,9 +76,6 @@ from torch.nn.functional import log_softmax, kl_div
 
 if is_peft_available():
     from peft import PeftConfig, PeftModel
-
-if is_vllm_available():
-    from vllm import LLM, SamplingParams
 
 if is_wandb_available():
     import wandb
@@ -450,6 +446,8 @@ class DistilTrainer(BaseTrainer):
                 )
 
             if self.vllm_mode == "server":
+                from trl.extras.vllm_client import VLLMClient
+
                 if self.accelerator.is_main_process:
                     if args.vllm_server_base_url is not None:
                         base_url = args.vllm_server_base_url
@@ -459,6 +457,8 @@ class DistilTrainer(BaseTrainer):
                     self.vllm_client.init_communicator(device=torch.cuda.current_device())
 
             elif self.vllm_mode == "colocate":
+                from vllm import LLM, SamplingParams
+
                 # Make sure vllm_tensor_parallel_size group size evenly divides the world size - each group should have
                 # the same number of ranks
                 if not self.accelerator.num_processes % self.vllm_tensor_parallel_size == 0:
